@@ -1,0 +1,97 @@
+# -*- coding: utf-8 -*-
+"""
+Created on Fri Oct  9 23:50:34 2020
+
+@author: YSL
+"""
+
+#这是一个记录软件第一页代码块的文件
+#第一页功能为基础计算，“=”的响应函数中调用的函数均在basic_operations.py中
+#主文件开头需要from basic_operations import *
+
+    def stack1UI(self):
+        layout = QVBoxLayout()
+        sublayout = QGridLayout()
+        self.operator_stack = []
+        self.number_stack = []
+
+        self.text_edit = QTextEdit()
+        self.text_edit.setReadOnly(True)    #显示结果，访问权限设为：只读
+        layout.addWidget(self.text_edit)
+        #定义各按键的名称
+        names = ['ln', 'e', '√x', 'x^y', 'DEL', 'AC', 'sin', '7', '8', '9', 
+                 '(', ')','cos', '4', '5', '6', '+', '-', 'arcsin', '1', '2',
+                 '3', '×', '/','arccos', '0', '.', 'π', '%', '=']
+        
+        #生成各按键的位置
+        #按键共有4行9列
+        positions = [(i, j) for i in range(5) for j in range(6)]
+        #按键的名称与位置对应起来
+        for name, position in zip(names, positions):
+            button = QPushButton(name)  #生成按键
+            button.clicked.connect(lambda: self.show_msg(self.text_edit))
+            sublayout.addWidget(button, *position)   #‘*’将位置元组分成两个值
+
+        layout.addLayout(sublayout)
+        self.stack1.setLayout(layout)
+
+    #按键响应的槽函数
+    #功能:将按键对应的字符显示到屏幕
+    def show_msg(self, receiver):
+        #每个按钮都连接了show_msg的点击事件
+        sender = self.sender()
+        sender_text = sender.text()
+        #AC/DEL/以及‘=’不显示在屏幕，要进行操作
+        #点击AC时的事件，清空text_edit中的内容
+        if sender_text == 'AC':
+            self.text_edit.clear()
+        elif sender_text == 'DEL':
+            self.Backspace()            
+        elif sender_text == '=':
+            self.Calculate()
+        elif sender_text == 'x^y':
+            #如果进行幂操作，屏幕只显示符号^，而不是x^y
+            _str = self.text_edit.toPlainText()
+            self.text_edit.setText(_str + '^')
+        elif sender_text == '√x':
+            #如果进行开根号，屏幕只显示根号，而不是根号x
+            _str = self.text_edit.toPlainText()
+            self.text_edit.setText(_str + '√')           
+        else:
+            _str = self.text_edit.toPlainText()
+            self.text_edit.setText(_str + sender_text)
+            
+    #点击DEL时的事件，删除一个字符
+    def Backspace(self):
+        expression = self.text_edit.toPlainText()
+        length = len(expression)
+        expression = expression[0:length-1]
+        self.text_edit.setText(expression)
+
+    def Calculate(self):
+        try:
+            formula= self.text_edit.toPlainText()
+            #如果只输入了数字，那么计算结果仍为数字
+            if re.match('-?[\d+,π,e]\.?\d*$', formula):
+                self.text_edit.append(formula + '\n')
+                return
+            #输入的内容是表达式，屏幕显示计算结果
+            #将fomular分割，只留当前行
+            length = len(formula)
+            i = 0
+            flag = False
+            #判断现在text_edit是否多行
+            while i < length:
+                if formula[i] == '\n':
+                    flag = True
+                    break
+                i = i + 1
+            if flag:
+                formula_split = formula.rsplit('\n', 1)
+                formula = formula_split[1]
+            #Result_cal为处理表达式formula并返回计算结果的函数
+            result = Result_cal(Formula_format(formula))
+            self.text_edit.append(result)      
+        except:
+            self.text_edit.clear()
+            self.text_edit.setText('出错啦！请按"AC"键清空，重新输入公式！')

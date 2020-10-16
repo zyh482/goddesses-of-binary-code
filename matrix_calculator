@@ -1,0 +1,204 @@
+# -*- coding: utf-8 -*-
+"""
+Created on Fri Oct 16 20:45:01 2020
+
+@author: YSL
+"""
+
+    def stack2UI(self):
+        layout = QVBoxLayout()
+        sublayout1 = QHBoxLayout()
+        sublayout2 = QGridLayout()
+        #定义输入输出框的子布局
+        #定义text控件
+        self.input_edit = QTextEdit()
+        self.output_edit = QTextEdit()
+
+        self.input_edit.setPlaceholderText('Input matrix:(example)''\n''1 3 3'
+                                          '\n''1 2 4''\n''2 3 5''\n''加减乘幂记得换行哦！')
+        self.output_edit.setPlaceholderText('Output matrix:')
+        self.output_edit.setReadOnly(True)
+
+        sublayout1.addWidget(self.input_edit)
+        sublayout1.addWidget(self.output_edit)
+        #定义按键操作框的子布局
+        #定义按钮控件
+        
+        names = ['Clear', 'Answer',
+                 'DEL', 'Add', 'Minus', 'Mul', 
+                 '逆', '秩', '幂', '转置', 
+                 '最简型','行列式', '特征值','特征向量']
+        positions = [(0, 0), (0, 3), (1, 0), (1, 1), (1, 2), (1, 3), (2, 0), (2, 1), (2, 2),
+                     (2, 3), (3, 0), (3, 1), (3, 2), (3, 3)]
+        #循环实现布局
+        for name, position in zip(names, positions):
+            button = QPushButton(name)
+            button.clicked.connect(lambda: self.show_msg2())
+            sublayout2.addWidget(button, *position)
+        #将子布局合并为一个完整的布局
+        layout.addLayout(sublayout1)
+        layout.addLayout(sublayout2)
+        self.stack2.setLayout(layout)
+        
+    #按键响应的槽函数
+    #功能:在屏幕显示操作，进行计算，在output框中显示结果
+    def show_msg2(self):
+        #获取按键名称
+        sender = self.sender()
+        sender_text = sender.text()
+        #清空屏幕
+        if sender_text == 'Clear':
+            self.input_edit.clear()
+            self.output_edit.clear()
+        #处理加减乘幂操作，在output edit中显示计算结果
+        if sender_text == 'Answer':
+            self.Answer_output()
+        #退格，删除一个字符
+        if sender_text == 'DEL':
+            self.Backspace_2()
+        if sender_text == 'Add':
+            self.input_edit.append('+')
+        if sender_text == 'Minus':
+            self.input_edit.append('-') 
+        if sender_text == 'Mul':
+            self.input_edit.append('*')
+        if sender_text == '幂':
+            self.input_edit.append('^')
+        if sender_text == '逆':
+            self.Reverse_op()
+        if sender_text == '秩':
+            self.Rank_op()
+        if sender_text == '转置':
+            self.Transpose_op()
+        if sender_text == '最简型':
+            self.Rref_op()
+        if sender_text == '行列式':
+            self.Det_op()
+        if sender_text == '特征值':
+            self.Eigenval_op()
+        if sender_text == '特征向量':
+            self.Eigenvect_op()
+    
+    def initConnect(self):
+        self.input_edit.textChanged.connect(self.cursorChange)
+        
+    #每次输入都自动滚屏到底
+    def cursorChange(self):
+        print('Cursor change')
+        cursor = self.input_edit.textCursor()
+        cursor.movePosition(QTextCursor.End)
+        self.input_edit.setTextCursor(cursor)
+
+    #退格操作
+    def Backspace_2(self):
+        expression = self.input_edit.toPlainText()
+        length = len(expression)
+        expression = expression[0:length-1]
+        self.input_edit.setText(expression) 
+    
+    #矩阵加减、乘、幂次运算    
+    def Answer_output(self):
+        text = self.input_edit.toPlainText()
+        length = len(text)
+        try:
+            matrix = Cal_four_op(text)#详见matrix_operations.py
+            self.output_edit.setPlainText(matrix)
+        except:
+            self.output_edit.setPlainText('出错啦！请检查矩阵是否正确！')
+      
+    #求矩阵的逆矩阵
+    def Reverse_op(self):
+        text = self.input_edit.toPlainText()
+        listForMat = formatInput(text) #处理输入内容，具体函数实现在matrix_operations.py
+        A = Matrix(listForMat)
+        # 不是方阵或者不满秩 无法求逆
+        if A.shape[0] != A.shape[1] or A.rank() != A.shape[0]:
+            self.output_edit.setText('您输入的矩阵无法求逆，请按Clear键清空！')
+            return
+        reverse_A = A ** -1
+        output = formatOutput(reverse_A)#处理计算后的矩阵，具体函数实现在matrix_operations.py
+        #将结果输出到右边的结果框
+        self.output_edit.setPlainText(output) 
+    
+    #求矩阵的秩
+    def Rank_op(self):
+        text = self.input_edit.toPlainText()
+        listForMat = formatInput(text)
+        A = Matrix(listForMat)
+        
+        rank = A.rank()
+        output = str(rank)
+        self.output_edit.setPlainText(output)
+    
+    #转置操作
+    def Transpose_op(self):
+        text = self.input_edit.toPlainText()
+        listForMat = formatInput(text)
+        A = Matrix(listForMat)
+        A = Matrix(A)
+        transpose_A = A.T
+        output = formatOutput(transpose_A)
+
+        self.output_edit.setPlainText(output)
+    
+    #求矩阵的最简型    
+    def Rref_op(self):
+        text = self.input_edit.toPlainText()
+        listForMat = formatInput(text)
+        A = Matrix(listForMat)
+
+        rrf_matrix = A.rref()[0]
+        output = formatOutput(rrf_matrix)
+        self.output_edit.setPlainText(output)
+     
+    #求矩阵的行列式
+    def Det_op(self):
+        text = self.input_edit.toPlainText()
+        listForMat = formatInput(text)
+        A = Matrix(listForMat)
+        # 不是方正没法求行列式
+        if A.shape[0] != A.shape[1]:
+            self.output_edit.setText('您输入的矩阵无法求行列式，请按Clear键清空！')
+            return
+        det = A.det()
+        output = str(det)
+        self.output_edit.setPlainText(output)
+    
+    #求矩阵的特征值    
+    def Eigenval_op(self):
+        text = self.input_edit.toPlainText()
+        listForMat = formatInput(text)
+        A = Matrix(listForMat)
+        # 不是方阵没法求特征值
+        if A.shape[0] != A.shape[1]:
+            self.output_edit.setText('您输入的矩阵无法求特征值，请按Clear键清空！')
+            return
+        eigenvalmap = A.eigenvals()
+        output = ''
+        for val, num in eigenvalmap.items():
+            for i in range(num):
+                output += str(val) + '\n'
+        self.output_edit.setPlainText(output)
+    
+    #求特征向量
+    def Eigenvect_op(self):
+        text = self.input_edit.toPlainText()
+        listForMat = formatInput(text)
+        A = Matrix(listForMat)
+        # 不是方阵没法求特征向量
+        if A.shape[0] != A.shape[1]:
+            self.output_edit.setText('您输入的矩阵无法求特征向量，请按Clear键清空！')
+            return
+        eigenvectList = A.eigenvects()
+        output = ''
+        #对每个特征值分别求特征向量
+        for i in range(len(eigenvectList)):
+            output += '特征值:' + str(eigenvectList[i][0])
+            output += '\n数量:' + str(eigenvectList[i][1])
+            output += '\n特征向量: \n'
+            for j in range(len(eigenvectList[i][2])):# 可能有多个特征向量
+                output += formatOutput(eigenvectList[i][2][j]) + '\n'
+                output += '\n \n'
+            output += '\n'
+
+        self.output_edit.setPlainText(output)

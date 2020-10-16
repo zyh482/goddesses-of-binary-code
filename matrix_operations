@@ -1,0 +1,121 @@
+# -*- coding: utf-8 -*-
+"""
+Created on Tue Oct 13 21:30:12 2020
+
+@author: YSL
+"""
+
+from sympy import Matrix
+import numpy as np
+
+#处理input_edit框中的内容，转化为list进行运算
+def formatInput(inputText):
+    inputText.strip()
+    inputText += ' \n'
+    listForMat = list()
+    templist = list()
+    currentNum = ''
+    for char in inputText:
+        if char.isalnum():
+            currentNum += char
+        if char == '-':
+            currentNum += char 
+        if char.isspace():
+            if currentNum.isalnum() or currentNum[1:].isalnum():
+                templist.append(int(currentNum))
+            currentNum = ''
+        if char == '\n' and len(templist) != 0:
+            listForMat.append(templist)
+            templist = []
+    return listForMat
+ 
+#将计算结果转化为清晰的格式
+def formatOutput(matrix):
+    output = ''
+    row, column = matrix.shape
+    count = 0
+    for i in matrix:
+        if count % column == 0 and count != 0:
+            output += '\n' 
+        output += str(i) + ' '
+        count += 1
+    return output
+
+#实现矩阵加减、乘、幂次运算
+def Cal_four_op(text):
+    length = len(text)
+    k = Find_op_adress(text)#找到操作符的下标并记录下来
+    matrix1_split = text[0 : k - 1]
+    matrix2_split = text[k + 2 : length]
+    matrix1 = formatInput(matrix1_split)
+    matrix2 = formatInput(matrix2_split)
+    op = text[k]
+    #如果操作符为“+/-/×”说明操作符前后是矩阵，进行对应计算
+    if op == '+':
+        return formatOutput(Add_op(matrix1, matrix2))
+    if op == '-':
+        return formatOutput(Minus_op(matrix1, matrix2))
+    if op == '*':
+        return formatOutput(Mul_op(matrix1, matrix2))
+    if op == '^':
+        return formatOutput(Power_cal(matrix1, text[k + 2 : length]))
+
+
+#处理输入的字符串，找到操作符的下标     
+def Find_op_adress(text):
+    i = 0
+    length = len(text)
+    while i < length:
+        #必须满足当前字符是+/-/×/^且后一个是换行符(因为"-"也有可能是负号)
+        if (text[i] == '+' or text[i] == '-' or\
+        text[i] == '*' or text[i] == '^') and text[i + 1] == '\n':
+            break
+        else: i = i + 1
+    return i
+
+#矩阵加法
+def Add_op(matrix1, matrix2):
+    A = Matrix(matrix1)
+    B = Matrix(matrix2)
+    if A.shape == B.shape:
+        return A + B
+
+#矩阵相减  
+def Minus_op(matrix1, matrix2):
+    A = Matrix(matrix1)
+    B = Matrix(matrix2)
+    if A.shape == B.shape:
+        return A - B
+
+#矩阵乘法    
+def Mul_op(matrix1, matrix2):
+    A = Matrix(matrix1)
+    B = Matrix(matrix2)
+    #矩阵和矩阵相乘必须满足m×n和n×m
+    if A.shape[0] == B.shape[1] and A.shape[1] == B.shape[0]:
+        return A * B
+    #矩阵和常数相乘
+    elif A.shape[0] == A.shape[1] == 1:
+        for i in range (0, B.shape[0]):
+            for j in range (0, B.shape[1]):
+                B[i][j] = B[i][j] * A[0][0]
+        return B
+    elif B.shape[0] == B.shape[1] == 1:
+        for i in range (0, A.shape[0]):
+            for j in range (0, A.shape[1]):
+                A[i][j] = A[i][j] * B[0][0]
+        return A
+
+def Power_cal(matrix1, n):
+    A = Matrix(matrix1)
+    B = A
+    j = 1
+    i = int(n)
+    #利用numpy库的点乘功能循环实现
+    while True:
+        if j < i:
+            j = j + 1
+            B = np.dot(B, A)
+        else:
+            break
+    return Matrix(B)

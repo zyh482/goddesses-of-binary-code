@@ -1,0 +1,16 @@
+QPushButton{
+    color:White;
+    font-family:UD Digi Kyokasho NK-B;
+    border: 2px solid orange;
+    border-radius: 8px;
+    background:rgb(250,126, 35);
+}
+QPushButton:hover{
+    border: 2px solid orange;
+    background:rgb(248, 179, 127);
+}
+QPushButton:pressed{
+    border: 2px solid orange;
+    color: white;
+    background:rgb(250,126, 35);
+}
